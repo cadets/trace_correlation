@@ -29,52 +29,42 @@ class Correlator(object):
         """
         Takes a json record and returns a tuple (key address information, record)
         """
+        cleanup_record(json_record)
         if json_record["event"] == "fbt:kernel:cc_conn_init:":
-            cleanup_record(json_record)
             json_record["uuid"] = json_record.pop("so_uuid", None)
-#             print(self.key_events[(json_record["faddr"], json_record["fport"])])
-#             print(json_record)
             self.key_events[(json_record["faddr"], json_record["fport"])].append(json_record)
-#             print(self.key_events[(json_record["faddr"], json_record["fport"])])
-        if json_record["event"] == "audit:event:aue_accept:":
-            cleanup_record(json_record)
+        elif json_record["event"] == "audit:event:aue_accept:":
             json_record["uuid"] = json_record.pop("ret_objuuid1", None)
             json_record["faddr"] = json_record.pop("address", None)
             json_record["fport"] = json_record.pop("port", None)
             self.key_events[(json_record["faddr"], json_record["fport"])].append(json_record)
-        if json_record["event"] == "audit:event:aue_connect:":
-            cleanup_record(json_record)
+        elif json_record["event"] == "audit:event:aue_connect:":
             json_record["uuid"] = json_record.pop("arg_objuuid1", None)
             json_record["faddr"] = json_record.pop("address", None)
             json_record["fport"] = json_record.pop("port", None)
             if json_record.get("faddr") and json_record.get("fport"):
                 self.key_events[(json_record["faddr"], json_record["fport"])].append(json_record)
-        if json_record["event"] == "audit:event:aue_recvfrom:":
-            cleanup_record(json_record)
+        elif json_record["event"] == "audit:event:aue_recvfrom:":
             json_record["uuid"] = json_record.pop("arg_objuuid1", None)
             json_record["faddr"] = json_record.pop("address", None)
             json_record["fport"] = json_record.pop("port", None)
             if json_record.get("faddr") and json_record.get("fport"):
                 self.key_events[(json_record["faddr"], json_record["fport"])].append(json_record)
-        if json_record["event"] == "audit:event:aue_recvmsg:":
-            cleanup_record(json_record)
+        elif json_record["event"] == "audit:event:aue_recvmsg:":
             json_record["uuid"] = json_record.pop("arg_objuuid1", None)
             json_record["faddr"] = json_record.pop("address", None)
             json_record["fport"] = json_record.pop("port", None)
             if json_record.get("faddr") and json_record.get("fport"):
                 self.key_events[(json_record["faddr"], json_record["fport"])].append(json_record)
-        if json_record["event"] == "audit:event:aue_sendto:":
-            cleanup_record(json_record)
+        elif json_record["event"] == "audit:event:aue_sendto:":
             json_record["uuid"] = json_record.pop("arg_objuuid1", None)
             json_record["faddr"] = json_record.pop("address", None)
             json_record["fport"] = json_record.pop("port", None)
             if json_record.get("faddr") and json_record.get("fport"):
                 self.key_events[(json_record["faddr"], json_record["fport"])].append(json_record)
-        if json_record["event"] == "udp:kernel:none:":
-            cleanup_record(json_record)
+        elif json_record["event"] == "udp:kernel:none:":
             json_record["uuid"] = json_record.pop("so_uuid", None)
             self.key_events[(json_record["faddr"], json_record["fport"])].append(json_record)
-#         return json_record
 
 
 
@@ -85,28 +75,25 @@ class Correlator(object):
         (host1, uuid1, host2, uuid2, reason for correlation)
         """
 
-        keyed_events = self.key_events
         links = []
         local_port = event.get("lport", None)
         local_addr = event.get("laddr", None)
         if not local_port or not local_addr:
             return links
 
-        json_records = keyed_events[(local_addr, local_port)]
-#         json_records = dict(keyed_events).get((local_addr, local_port), [])
-#         print(self.key_events)
-#         print(len(json_records))
-        if json_records:
-            for record in json_records:
-                if abs(record["time"] - event["time"]) < self.window:
-                    if (event["uuid"], record["uuid"]) not in self.known_correlations:
-                        self.known_correlations[(event["uuid"], record["uuid"])] = True
-                        links.append((event["host"], event["uuid"], record["host"], record["uuid"], "connected sockets"))
+        for record in self.key_events[(local_addr, local_port)]:
+            if abs(record["time"] - event["time"]) < self.window:
+                if (event["uuid"], record["uuid"]) not in self.known_correlations:
+                    self.known_correlations[(event["uuid"], record["uuid"])] = True
+                    links.append((event["host"], event["uuid"], record["host"], record["uuid"], "connected sockets"))
         return links
 
 def cleanup_record(json_record):
     """
     Takes a cadets json event and removes irrelevant parts
+
+    Useful for debugging (since it reduces data to look at), but not for
+    normal use.
     """
     return
     json_record.pop("event", None)
