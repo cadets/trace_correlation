@@ -12,7 +12,6 @@ import argparse
 import os
 import json
 import logging
-from collections import defaultdict
 
 from correlator import Correlator
 
@@ -40,7 +39,7 @@ def analyse_files(paths, verbosity, time_window):
 
     correlator = Correlator(time_window)
     trace = {}
-    filtered_events = {}
+    relevant_lines = {}
 
     for path in paths:
         trace[path] = open(file=path, mode='r', buffering=1, errors='ignore')
@@ -48,26 +47,20 @@ def analyse_files(paths, verbosity, time_window):
     for path in paths:
         # map and filter return iterators - they don't do everything at once.
         lines = map(file_line_to_json, trace[path])
-        relevant_lines = filter(correlator.event_filter, lines)
-        filtered_events[path] = map(correlator.key_event, relevant_lines)
-
-    keyed_events = []
-    for path in paths:
-        keyed_events.extend(filtered_events[path])
-
-    keyed_events_dict = defaultdict(list)
-    for key, values in keyed_events:
-        if key:
-            keyed_events_dict[key].append(values)
+        relevant_lines[path] = list(filter(correlator.event_filter, lines))
+        for line in relevant_lines[path]:
+            correlator.key_event(line)
 
     # for event in all-events, search for event with key matching local addr/port
     # Link events
     results = []
-    for (_, event) in keyed_events:
-        results.extend(correlator.link_events(event, keyed_events_dict))
+    for path in paths:
+        for event in relevant_lines[path]:
+            if event:
+                results.extend(correlator.link_events(event))
 
-    for (uuid1, uuid2, reason) in results:
-        print('{"uuid1":"'+uuid1+'", "uuid2":"'+uuid2+'", "reason":"'+reason+'"}')
+    for (host1, uuid1, host2, uuid2, reason) in results:
+        print('{"host1":"'+host1+'", "uuid1":"'+uuid1+'", "host2":"'+host2+'", "uuid2":"'+uuid2+'", "reason":"'+reason+'"}')
 
     for path in paths:
         trace[path].close()
