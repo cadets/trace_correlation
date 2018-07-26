@@ -69,8 +69,8 @@ def file_line_to_json(line):
     try:
         return json.loads(line[2:])
     except ValueError as err:
-#         if line:
-#             logging.error("Invalid CADETS entry \""+line+"\", error was: " + str(err))
+        if line:
+            logging.error("invalid cadets entry \""+line+"\", error was: " + str(err))
         return None
 
 if __name__ == '__main__':
