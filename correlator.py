@@ -85,7 +85,7 @@ class Correlator(object):
             if abs(record["time"] - event["time"]) < self.window:
                 if (event["uuid"], record["uuid"]) not in self.known_correlations:
                     self.known_correlations[(event["uuid"], record["uuid"])] = True
-                    links.append((event["host"], event["uuid"], record["host"], record["uuid"], "connected sockets"))
+                    links.append((max(record["time"], event["time"]), event["host"], event["uuid"], record["host"], record["uuid"], "connected sockets"))
         return links
 
 def cleanup_record(json_record):

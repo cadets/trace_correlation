@@ -59,8 +59,8 @@ def analyse_files(paths, verbosity, time_window):
             if event:
                 results.extend(correlator.link_events(event))
 
-    for (host1, uuid1, host2, uuid2, reason) in results:
-        print('{"host1":"'+host1+'", "uuid1":"'+uuid1+'", "host2":"'+host2+'", "uuid2":"'+uuid2+'", "reason":"'+reason+'"}')
+    for (time, host1, uuid1, host2, uuid2, reason) in results:
+        print('{"timestamp":'+str(time)+', "host1":"'+host1+'", "uuid1":"'+uuid1+'", "host2":"'+host2+'", "uuid2":"'+uuid2+'", "reason":"'+reason+'"}')
 
     for path in paths:
         trace[path].close()
