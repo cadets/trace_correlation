@@ -1,13 +1,3 @@
-"""
-* Copyright 2018 Amanda Strnad <amanda.strnad@baesystems.com>
-*
-* This software was developed by BAE Systems, the University of Cambridge
-* Computer Laboratory, and Memorial University under DARPA/AFRL contract
-* FA8650-15-C-7558 (“CADETS”), as part of the DARPA Transparent Computing
-* (TC) research program.
-*
-"""
-
 '''
 Socket Correlation
 '''
