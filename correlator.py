@@ -14,6 +14,8 @@ class Correlator(object):
         self.window = time_window
 
     def event_filter(self, json_record):
+        """ Return True if the event may be used in correlation """
+
         if not json_record:
             return False
         if json_record["event"] in [
@@ -85,7 +87,10 @@ class Correlator(object):
             if abs(record["time"] - event["time"]) < self.window:
                 if (event["uuid"], record["uuid"]) not in self.known_correlations:
                     self.known_correlations[(event["uuid"], record["uuid"])] = True
-                    links.append((max(record["time"], event["time"]), event["host"], event["uuid"], record["host"], record["uuid"], "connected sockets"))
+                    links.append((max(record["time"], event["time"]),
+                                  event["host"], event["uuid"],
+                                  record["host"], record["uuid"],
+                                  "connected sockets"))
         return links
 
 def cleanup_record(json_record):
@@ -95,15 +100,14 @@ def cleanup_record(json_record):
     Useful for debugging (since it reduces data to look at), but not for
     normal use.
     """
+#     json_record.pop("event", None)
+#     json_record.pop("fd", None)
+#     json_record.pop("retval", None)
+#     json_record.pop("cpu_id", None)
+#     json_record.pop("uid", None)
+#     json_record.pop("pid", None)
+#     json_record.pop("ppid", None)
+#     json_record.pop("tid", None)
+#     json_record.pop("subjthruuid", None)
+#     json_record.pop("subjprocuuid", None)
     return
-    json_record.pop("event", None)
-    json_record.pop("fd", None)
-    json_record.pop("retval", None)
-    json_record.pop("cpu_id", None)
-    json_record.pop("uid", None)
-    json_record.pop("pid", None)
-    json_record.pop("ppid", None)
-    json_record.pop("tid", None)
-    json_record.pop("subjthruuid", None)
-    json_record.pop("subjprocuuid", None)
-

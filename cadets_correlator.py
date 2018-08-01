@@ -31,11 +31,10 @@ def main():
     args = parser.parse_args()
 
     # Load the input files
-    # TODO do we need to expanduser? Not on OSX, but what about FreeBSD, etc?
     analyse_files(list(map(os.path.expanduser, args.files)), args.v, args.window)
 
 
-def analyse_files(paths, verbosity, time_window):
+def analyse_files(paths, _verbosity, time_window):
 
     correlator = Correlator(time_window)
     trace = {}
@@ -60,7 +59,10 @@ def analyse_files(paths, verbosity, time_window):
                 results.extend(correlator.link_events(event))
 
     for (time, host1, uuid1, host2, uuid2, reason) in results:
-        print('{"timestamp":'+str(time)+', "host1":"'+host1+'", "uuid1":"'+uuid1+'", "host2":"'+host2+'", "uuid2":"'+uuid2+'", "reason":"'+reason+'"}')
+        print('{"timestamp":'+ str(time) +
+              ', "host1":"' + host1 + '", "uuid1":"' + uuid1 +
+              '", "host2":"' + host2 + '", "uuid2":"' + uuid2 +
+              '", "reason":"' + reason + '"}')
 
     for path in paths:
         trace[path].close()
