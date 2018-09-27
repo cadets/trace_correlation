@@ -18,12 +18,12 @@ class Correlator(object):
 
         if not json_record:
             return False
-        if json_record["event"] in [
+        if json_record.get("event", "") in [
                 "fbt:kernel:cc_conn_init:",
+#                 "udp:kernel:none:",
                 "audit:event:aue_accept:", "audit:event:aue_connect:",
                 "audit:event:aue_recvfrom:", "audit:event:aue_recvmsg:",
-                "audit:event:aue_sendto:", "audit:event:aue_sendmsg:",
-                "udp:kernel:none:"]:
+                "audit:event:aue_sendto:", "audit:event:aue_sendmsg:"]:
             return True
         return False
 
