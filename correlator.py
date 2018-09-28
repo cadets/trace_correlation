@@ -31,6 +31,8 @@ class Correlator(object):
         """
         Takes a json record and returns a tuple (key address information, record)
         """
+        if not json_record:
+            return
         cleanup_record(json_record)
         if json_record["event"] == "fbt:kernel:cc_conn_init:":
             json_record["uuid"] = json_record.pop("so_uuid", None)
@@ -77,12 +79,15 @@ class Correlator(object):
         (host1, uuid1, host2, uuid2, reason for correlation)
         """
 
-        links = []
-        local_port = event.get("lport", None)
-        local_addr = event.get("laddr", None)
-        if not local_port or not local_addr:
-            return links
+        if not event:
+            return []
 
+        local_port = event.get("lport")
+        local_addr = event.get("laddr")
+        if not local_port or not local_addr or not event.get("uuid"):
+            return []
+
+        links = []
         for record in self.key_events[(local_addr, local_port)]:
             if abs(record["time"] - event["time"]) < self.window:
                 if (event["uuid"], record["uuid"]) not in self.known_correlations:

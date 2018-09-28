@@ -33,7 +33,7 @@ def get_arg_parser():
     parser = argparse.ArgumentParser(description="Add correlations between CADETS traces")
     parser.add_argument("-v", action="store_true", default=False,
                         help="Turn up verbosity.")
-    parser.add_argument("files", action="store", type=str, nargs='+',
+    parser.add_argument("files", action="store", type=str, nargs='*',
                         help="File to run correlation on")
     parser.add_argument("-window", action="store", type=int, default=50000000000,
                         help="Nanosecond time window for correlations (default 5ms)")
@@ -61,6 +61,10 @@ def main():
 
     producer = None
     if args.kafka:
+        if args.files:
+            parser.print_help()
+            sys.exit(1)
+
         pconfig = {}
         pconfig["bootstrap.servers"] = args.kouts
         pconfig["api.version.request"] = True
@@ -99,13 +103,6 @@ def analyse_files(paths, _verbosity, time_window):
     for path in paths:
         trace[path] = open(file=path, mode='r', buffering=1, errors='ignore')
 
-    for path in paths:
-        # map and filter return iterators - they don't do everything at once.
-        lines = map(file_line_to_json, trace[path])
-        relevant_lines[path] = list(filter(correlator.event_filter, lines))
-        for line in relevant_lines[path]:
-            correlator.key_event(line)
-
     # for event in all-events, search for event with key matching local addr/port
     for path in paths:
         # map and filter return iterators - they don't do everything at once.
@@ -114,8 +111,8 @@ def analyse_files(paths, _verbosity, time_window):
         for line in relevant_lines[path]:
             correlator.key_event(line)
             # Link events
-            for(time, host1, uuid1, host2, uuid2, reason) in correlator.link_events(line):
-                result = '{"timestamp":'+ str(time) + ', "host1":"' + host1 + '", "uuid1":"' + uuid1 + '", "host2":"' + host2 + '", "uuid2":"' + uuid2 + '", "reason":"' + reason + '"}'
+            for link in correlator.link_events(line):
+                result = correlation_tuple_to_string(link)
                 print(result)
 
     for path in paths:
@@ -128,9 +125,9 @@ def analyse_kafka(consumer, _verbosity, time_window, producer, out_topic):
 
     while 1:
         try:
-            raw_cadets_record = consumer.poll(timeout=20)
+            raw_cadets_record = consumer.poll(timeout=60)
             if raw_cadets_record and not raw_cadets_record.error():
-                line = raw_cadets_record.value()
+                line = file_line_to_json(raw_cadets_record.value())
                 correlator.key_event(line)
                 for link in correlator.link_events(line):
                     result = correlation_tuple_to_string(link)
@@ -138,11 +135,11 @@ def analyse_kafka(consumer, _verbosity, time_window, producer, out_topic):
                         producer.produce(out_topic, value=result, key=str(count).encode())
                         producer.poll(0)
                         count += 1
-            if not raw_cadets_record:
-                sleep(10)
             else:
-                # was a kafka error message
                 pass
+        except (AttributeError, TypeError, UnicodeDecodeError) as err:
+            # Skip the entry
+            continue
         except KeyboardInterrupt: # handle ctrl+c
             break
 
@@ -157,8 +154,8 @@ def file_line_to_json(line):
     try:
         return json.loads(line)
     except ValueError as err:
-        if line and line.strip():
-            logging.error("invalid cadets entry \""+line+"\", error was: " + str(err))
+        if line and str(line).strip():
+            logging.error("invalid cadets entry \""+str(line)+"\", error was: " + str(err))
         return None
 
 if __name__ == '__main__':
