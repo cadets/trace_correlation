@@ -151,12 +151,15 @@ def analyse_kafka(consumer, _verbosity, time_window, producer, out_topic):
 
 def correlation_tuple_to_string(link):
     (time, host1, uuid1, host2, uuid2, reason) = link
-    return '{"timestamp":'+ str(time) + ', "host1":"' + host1 + '", "uuid1":"' + uuid1 + '", "host2":"' + host2 + '", "uuid2":"' + uuid2 + '", "reason":"' + reason + '"}'
+    return '{"event":"cadets::correlator:", "timestamp":'+ str(time) + ', "host1":"' + host1 + '", "uuid1":"' + uuid1 + '", "host2":"' + host2 + '", "uuid2":"' + uuid2 + '", "reason":"' + reason + '"}'
 
 def file_line_to_json(line):
     try:
         return json.loads(line)
     except ValueError as err:
-        if line:
+        if line and line.strip():
             logging.error("invalid cadets entry \""+line+"\", error was: " + str(err))
         return None
+
+if __name__ == '__main__':
+    main()
